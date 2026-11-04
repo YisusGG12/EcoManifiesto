@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EcoManifiesto - SaaS Portal Web Administrador</title>
+  
+  <!-- tailwind por cdn -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- chart.js para las graficas -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- estilos propios -->
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- colores personalizados para tailwind (verdes de semarnat y los de CRETIB) -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            semarnat: {
+              dark: '#0b3c26',
+              green: '#164e32',
+              light: '#e8f5e9',
+              accent: '#22c55e',
+            },
+            cretib: {
+              toxico: '#7f1d1d',
+              inflamable: '#c2410c',
+              corrosivo: '#b45309',
+              reactivo: '#6b21a8',
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-slate-100 font-sans text-gray-800 antialiased selection:bg-semarnat-light selection:text-semarnat-dark">
+
+  <div class="flex h-screen overflow-hidden">
+
+    <!-- menu lateral -->
+    <aside class="w-64 bg-white border-r border-gray-200 flex flex-col justify-between shrink-0 select-none">
+      <div>
+        <!-- logo -->
+        <div class="p-4 border-b border-gray-100 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-semarnat-dark rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-sm">🌿</div>
+            <div>
+              <h1 class="font-black text-gray-900 text-sm tracking-tight">EcoManifiesto</h1>
+              <span class="text-[10px] text-gray-400 font-bold block -mt-0.5">SaaS Portal • V 2.4 NORMA-052</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- botones del menu -->
+        <nav class="p-3 space-y-1">
+          <button onclick="cargarVistaWeb('dashboard')" id="nav-dashboard" class="w-full flex items-center gap-3 px-3 py-2.5 bg-semarnat-light text-semarnat-dark font-bold text-xs rounded-xl nav-transition">
+            <span class="text-base">📊</span> Dashboard y COA
+          </button>
+          <button onclick="cargarVistaWeb('manifestos')" id="nav-manifestos" class="w-full flex items-center gap-3 px-3 py-2.5 text-gray-600 hover:bg-gray-100 font-semibold text-xs rounded-xl nav-transition">
+            <span class="text-base">📋</span> Manifiestos
+          </button>
+          <button onclick="cargarVistaWeb('transportistas')" id="nav-transportistas" class="w-full flex items-center gap-3 px-3 py-2.5 text-gray-600 hover:bg-gray-100 font-semibold text-xs rounded-xl nav-transition">
+            <span class="text-base">🚚</span> Transportistas y Vehículos
+          </button>
+          <button onclick="cargarVistaWeb('expediente')" id="nav-expediente" class="w-full flex items-center gap-3 px-3 py-2.5 text-gray-600 hover:bg-gray-100 font-semibold text-xs rounded-xl nav-transition">
+            <span class="text-base">📁</span> Expediente Anual COA
+          </button>
+          <button onclick="cargarVistaWeb('usuarios')" id="nav-usuarios" class="w-full flex items-center gap-3 px-3 py-2.5 text-gray-600 hover:bg-gray-100 font-semibold text-xs rounded-xl nav-transition">
+            <span class="text-base">👥</span> Usuarios
+          </button>
+          <button onclick="cargarVistaWeb('bitacora')" id="nav-bitacora" class="w-full flex items-center gap-3 px-3 py-2.5 text-gray-600 hover:bg-gray-100 font-semibold text-xs rounded-xl nav-transition">
+            <span class="text-base">📜</span> Bitácora y Auditoría
+          </button>
+          <button onclick="cargarVistaWeb('configuracion')" id="nav-configuracion" class="w-full flex items-center gap-3 px-3 py-2.5 text-gray-600 hover:bg-gray-100 font-semibold text-xs rounded-xl nav-transition">
+            <span class="text-base">⚙️</span> Configuración
+          </button>
+        </nav>
+      </div>
+
+      <!-- perfil del admin -->
+      <div class="p-3 border-t border-gray-100 bg-gray-50 flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-semarnat-dark text-white font-bold flex items-center justify-center text-xs shadow-sm">RV</div>
+        <div class="overflow-hidden">
+          <p class="text-xs font-bold text-gray-800 truncate">Ing. Roberto Vega</p>
+          <p class="text-[10px] font-bold text-gray-400 tracking-wider">ADMINISTRADOR</p>
+        </div>
+      </div>
+    </aside>
+
+    <!-- contenido principal -->
+    <div class="flex-1 flex flex-col overflow-y-auto">
+
+      <!-- barra de arriba -->
+      <header class="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between sticky top-0 z-20 shadow-xs">
+        <div class="flex items-center gap-3 w-1/3 bg-gray-50 px-3 py-2 rounded-xl border border-gray-200">
+          <span class="text-gray-400 text-xs">🔍</span>
+          <input type="text" placeholder="Buscar manifiesto, residuo CRETIB, folio..." class="w-full text-xs border-none bg-transparent focus:outline-none text-gray-700">
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="bg-semarnat-light text-semarnat-dark text-xs font-bold px-3 py-1 rounded-full border border-green-200">
+            SEMARNAT NOM-052
+          </span>
+          <span class="text-xs font-semibold text-gray-600 border-l border-gray-200 pl-3">Planta Bajío - Celaya #04</span>
+        </div>
+      </header>
+
+      <!-- aqui van las vistas, solo se muestra una a la vez (ver app.js) -->
+      <main class="p-6 space-y-6 flex-1">
+
+        <!-- vista 1: dashboard y COA -->
+        <section id="web-view-dashboard" class="space-y-6">
+          <div class="flex justify-between items-center">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="bg-emerald-100 text-emerald-800 text-[10px] font-black px-2 py-0.5 rounded uppercase">VIGENCIA VIGENTE NOM-052</span>
+                <span class="text-[10px] text-gray-400 font-bold">🛡️ Sello Digital SHA-256</span>
+              </div>
+              <h2 class="text-xl font-black text-gray-900 mt-1">Dashboard y Reporte Anual COA</h2>
+              <p class="text-xs text-gray-500">Cédula de Operación Anual (SEMARNAT) • Ejercicio Fiscal 2026 • Registro Ambiental Federal #RAF-GTO-2024-0891</p>
+            </div>
+            <button class="bg-semarnat-dark hover:bg-semarnat-green text-white px-4 py-2.5 rounded-xl font-bold text-xs shadow flex items-center gap-2 transition-all">
+              <span>⬇</span> Exportar Expediente Anual COA
+            </button>
+          </div>
+
+          <!-- tarjetas con numeros (KPI) -->
+          <div class="grid grid-cols-4 gap-4">
+            <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-xs flex items-center justify-between">
+              <div>
+                <p class="text-[10px] font-bold text-gray-400 uppercase">TOTAL RESIDUOS GENERADOS</p>
+                <p class="text-2xl font-black text-gray-900 mt-1">142.8 <span class="text-xs text-gray-500 font-bold">Ton</span></p>
+                <span class="text-[10px] font-bold text-emerald-600">↑ +4.2% vs. Ejercicio 2025</span>
+              </div>
+              <div class="p-3 bg-green-50 text-green-700 rounded-xl text-xl">♻️</div>
+            </div>
+
+            <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-xs flex items-center justify-between">
+              <div>
+                <p class="text-[10px] font-bold text-gray-400 uppercase">MANIFIESTOS ENTREGADOS</p>
+                <p class="text-2xl font-black text-emerald-600 mt-1">328 <span class="text-xs text-gray-400 font-normal">/ 348 total</span></p>
+                <span class="text-[10px] font-bold text-emerald-600">94.2% Tasa de Cierre</span>
+              </div>
+              <div class="p-3 bg-emerald-50 text-emerald-700 rounded-xl text-xl">📋</div>
+            </div>
+
+            <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-xs flex items-center justify-between">
+              <div>
+                <p class="text-[10px] font-bold text-gray-400 uppercase">EN TRÁNSITO ACTIVO</p>
+                <p class="text-2xl font-black text-amber-600 mt-1">14 <span class="text-xs text-gray-400 font-normal">unidades</span></p>
+                <span class="text-[10px] font-bold text-amber-600">Monitoreo GPS Activo</span>
+              </div>
+              <div class="p-3 bg-amber-50 text-amber-700 rounded-xl text-xl">🚚</div>
+            </div>
+
+            <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-xs flex items-center justify-between">
+              <div>
+                <p class="text-[10px] font-bold text-gray-400 uppercase">PENDIENTES / ALMACÉN</p>
+                <p class="text-2xl font-black text-gray-800 mt-1">6 <span class="text-xs text-gray-400 font-normal">lotes</span></p>
+                <span class="text-[10px] font-bold text-gray-500">Max 60 Días LGPIR</span>
+              </div>
+              <div class="p-3 bg-gray-100 text-gray-700 rounded-xl text-xl">🏢</div>
+            </div>
+          </div>
+
+          <!-- graficas -->
+          <div class="grid grid-cols-3 gap-4">
+            <div class="col-span-2 bg-white p-5 rounded-2xl border border-gray-200 shadow-xs">
+              <div class="flex justify-between items-center mb-4">
+                <div>
+                  <h3 class="font-bold text-sm text-gray-900">Volumen Mensual de Residuos Peligrosos (Toneladas)</h3>
+                  <p class="text-[11px] text-gray-400">Trazabilidad acumulada vs. Límite Autorizado SEMARNAT (15.0 T/mes)</p>
+                </div>
+                <span class="text-xs font-bold text-semarnat-dark bg-semarnat-light px-2.5 py-1 rounded-lg">NOM-052</span>
+              </div>
+              <div class="h-56">
+                <canvas id="chartVolumen"></canvas>
+              </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs flex flex-col justify-between">
+              <div>
+                <h3 class="font-bold text-sm text-gray-900">Distribución CRETIB</h3>
+                <p class="text-[11px] text-gray-400 mb-2">NOM-052-SEMARNAT-2005</p>
+              </div>
+              <div class="h-40 relative flex justify-center">
+                <canvas id="chartCretib"></canvas>
+              </div>
+              <div class="grid grid-cols-2 gap-2 text-[11px] pt-2 border-t font-semibold">
+                <span class="text-red-900">● Tóxico (T): 82.8 T</span>
+                <span class="text-amber-700">● Inflamable (I): 34.3 T</span>
+                <span class="text-yellow-700">● Corrosivo (C): 17.1 T</span>
+                <span class="text-purple-800">● Reactivo (R): 8.6 T</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- banner del expediente -->
+          <div class="bg-semarnat-dark text-white p-4 rounded-2xl flex justify-between items-center shadow-md">
+            <div class="flex items-center gap-3">
+              <span class="text-2xl">🛡️</span>
+              <div>
+                <p class="font-bold text-sm">Expediente COA 2026 Completo y Blindado <span class="bg-emerald-500/30 text-emerald-300 text-[10px] px-2 py-0.5 rounded ml-2">LGPIR Art. 42</span></p>
+                <p class="text-xs text-green-200">348 manifiestos respaldados con cadena de custodia digital, sellos de tiempo inmutables RFC y firma SHA-256 ante SEMARNAT y ASEA.</p>
+              </div>
+            </div>
+            <button class="bg-white/10 hover:bg-white/20 text-white font-bold text-xs px-4 py-2 rounded-xl border border-white/20 transition-all">
+              Verificar Constancia Criptográfica
+            </button>
+          </div>
+        </section>
+
+        <!-- vista 2: manifiestos -->
+        <section id="web-view-manifestos" class="hidden space-y-6">
+          <div class="flex justify-between items-center">
+            <div>
+              <span class="bg-semarnat-light text-semarnat-dark text-[10px] font-black px-2 py-0.5 rounded">RF-08 - REGISTRO OFICIAL</span>
+              <h2 class="text-xl font-black text-gray-900 mt-1">Gestión y Control de Manifiestos Oficiales</h2>
+              <p class="text-xs text-gray-500">Histórico de custodia inalterable conforme a la NOM-052-SEMARNAT-2005.</p>
+            </div>
+            <button class="bg-semarnat-dark hover:bg-semarnat-green text-white px-4 py-2 rounded-xl font-bold text-xs shadow">
+              + Nuevo Manifiesto
+            </button>
+          </div>
+
+          <!-- tabla de manifiestos -->
+          <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-gray-50 border-b border-gray-200 text-gray-400 font-extrabold uppercase text-[10px]">
+                  <th class="p-4">FOLIO SEMARNAT</th>
+                  <th class="p-4">FECHA RETIRO</th>
+                  <th class="p-4">RESIDUO Y CLAVE CRETIB</th>
+                  <th class="p-4">CANTIDAD</th>
+                  <th class="p-4">TRANSPORTISTA AUTORIZADO</th>
+                  <th class="p-4">PLANTA DESTINO FINAL</th>
+                  <th class="p-4">ESTATUS CUSTODIA</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100 font-medium text-gray-700">
+                <tr class="hover:bg-gray-50">
+                  <td class="p-4 font-mono font-bold text-semarnat-dark">#EM-2026-0348</td>
+                  <td class="p-4">18/Abr/2026 09:30</td>
+                  <td class="p-4 font-bold">Aceite Lubricante Usado <span class="bg-red-100 text-red-800 text-[9px] px-1.5 py-0.5 rounded ml-1">T, I</span></td>
+                  <td class="p-4 font-bold">4,200 L</td>
+                  <td class="p-4">EcoTransportes del Centro S.A.</td>
+                  <td class="p-4">Termodestructores Monterrey</td>
+                  <td class="p-4"><span class="bg-emerald-100 text-emerald-800 font-black px-2.5 py-1 rounded-full text-[10px]">ENTREGADO</span></td>
+                </tr>
+                <tr class="hover:bg-gray-50">
+                  <td class="p-4 font-mono font-bold text-semarnat-dark">#EM-2026-0347</td>
+                  <td class="p-4">17/Abr/2026 14:15</td>
+                  <td class="p-4 font-bold">Lodos con Metales Pesados <span class="bg-red-100 text-red-800 text-[9px] px-1.5 py-0.5 rounded ml-1">T</span></td>
+                  <td class="p-4 font-bold">2,850 Kg</td>
+                  <td class="p-4">Transportes Químicos del Norte</td>
+                  <td class="p-4">Cimari Ramos Arizpe</td>
+                  <td class="p-4"><span class="bg-emerald-100 text-emerald-800 font-black px-2.5 py-1 rounded-full text-[10px]">ENTREGADO</span></td>
+                </tr>
+                <tr class="hover:bg-gray-50">
+                  <td class="p-4 font-mono font-bold text-semarnat-dark">#EM-2026-0042</td>
+                  <td class="p-4">30/Oct/2026 14:30</td>
+                  <td class="p-4 font-bold">Solventes Usados <span class="bg-amber-100 text-amber-800 text-[9px] px-1.5 py-0.5 rounded ml-1">I</span></td>
+                  <td class="p-4 font-bold">500 L</td>
+                  <td class="p-4">EcoTransportes del Centro S.A.</td>
+                  <td class="p-4">RIMSA Mina N.L.</td>
+                  <td class="p-4"><span class="bg-amber-100 text-amber-800 font-black px-2.5 py-1 rounded-full text-[10px]">EN TRÁNSITO</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- vista 3: transportistas y vehiculos -->
+        <section id="web-view-transportistas" class="hidden space-y-6">
+          <div class="flex justify-between items-center">
+            <div>
+              <span class="bg-semarnat-light text-semarnat-dark text-[10px] font-black px-2 py-0.5 rounded">RF-07 - MÓDULO FEDERAL</span>
+              <h2 class="text-xl font-black text-gray-900 mt-1">Gestión de Transportistas y Vehículos</h2>
+              <p class="text-xs text-gray-500">Control de empresas autorizadas, unidades motrices especializadas y validación en tiempo real de permisos SEMARNAT y SCT.</p>
+            </div>
+            <div class="flex gap-2">
+              <button class="bg-white border border-gray-300 text-gray-700 px-3 py-2 rounded-xl font-bold text-xs hover:bg-gray-50">
+                ⬇ Exportar Padrón
+              </button>
+              <button class="bg-semarnat-dark text-white px-4 py-2 rounded-xl font-bold text-xs hover:bg-semarnat-green">
+                + Registrar Nuevo Transportista
+              </button>
+            </div>
+          </div>
+
+          <!-- numeros de transportistas -->
+          <div class="grid grid-cols-4 gap-4">
+            <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-xs">
+              <p class="text-[10px] font-bold text-gray-400 uppercase">PADRÓN TOTAL</p>
+              <p class="text-2xl font-black text-gray-900 mt-1">24</p>
+              <span class="text-[10px] text-gray-500">100% Auditados</span>
+            </div>
+            <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-xs">
+              <p class="text-[10px] font-bold text-gray-400 uppercase">PERMISOS VIGENTES</p>
+              <p class="text-2xl font-black text-emerald-600 mt-1">21</p>
+              <span class="text-[10px] text-emerald-600 font-bold">87.5% cumplimiento</span>
+            </div>
+            <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-xs">
+              <p class="text-[10px] font-bold text-gray-400 uppercase">POR VENCER (&lt;30 DÍAS)</p>
+              <p class="text-2xl font-black text-amber-600 mt-1">2</p>
+              <span class="text-[10px] text-amber-600 font-bold">Acción requerida</span>
+            </div>
+            <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-xs">
+              <p class="text-[10px] font-bold text-gray-400 uppercase">VENCIDOS / BLOQUEADOS</p>
+              <p class="text-2xl font-black text-rose-600 mt-1">1</p>
+              <span class="text-[10px] text-rose-600 font-bold">Inhabilitado Legalmente</span>
+            </div>
+          </div>
+
+          <!-- tabla de transportistas -->
+          <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-gray-50 border-b border-gray-200 text-gray-400 font-extrabold uppercase text-[10px]">
+                  <th class="p-4">EMPRESA TRANSPORTISTA</th>
+                  <th class="p-4">RFC</th>
+                  <th class="p-4">VEHÍCULO Y TIPO</th>
+                  <th class="p-4">PLACAS FEDERALES</th>
+                  <th class="p-4">AUTORIZACIÓN SEMARNAT / SCT</th>
+                  <th class="p-4">ESTATUS</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100 font-medium text-gray-700">
+                <tr class="hover:bg-gray-50">
+                  <td class="p-4 font-bold text-gray-900">
+                    Transportes Químicos del Norte S.A. de C.V.
+                    <span class="block text-[10px] font-normal text-gray-400">Lic. Martha Morales</span>
+                  </td>
+                  <td class="p-4 font-mono text-gray-500">TQN-140523-9T4</td>
+                  <td class="p-4">Tractocamión Kenworth T680 (Pipa Acero Inox)</td>
+                  <td class="p-4 font-mono">45-AF-9X</td>
+                  <td class="p-4 font-mono font-bold text-emerald-800">SEMARNAT-09-028-PS-I-2024</td>
+                  <td class="p-4"><span class="bg-emerald-100 text-emerald-800 font-bold px-2.5 py-1 rounded-full text-[10px]">VIGENTE</span></td>
+                </tr>
+                <tr class="hover:bg-gray-50">
+                  <td class="p-4 font-bold text-gray-900">
+                    Ecológica de Residuos Bajío S.A.
+                    <span class="block text-[10px] font-normal text-gray-400">Ing. Salvador Peña</span>
+                  </td>
+                  <td class="p-4 font-mono text-gray-500">ERB-191104-MB2</td>
+                  <td class="p-4">Rabón Freightliner M2 106 (Caja Cerrada)</td>
+                  <td class="p-4 font-mono">7R-XX-22</td>
+                  <td class="p-4 font-mono font-bold text-emerald-800">SEMARNAT-11-042-PS-I-2023</td>
+                  <td class="p-4"><span class="bg-emerald-100 text-emerald-800 font-bold px-2.5 py-1 rounded-full text-[10px]">VIGENTE</span></td>
+                </tr>
+                <tr class="bg-rose-50/50 hover:bg-rose-50">
+                  <td class="p-4 font-bold text-gray-900">
+                    Auto-Líquidos de Occidente S.A.
+                    <span class="block text-[10px] font-bold text-rose-600">⚠️ Licencia Suspendida SCT</span>
+                  </td>
+                  <td class="p-4 font-mono text-gray-500">ALO-130202-V19</td>
+                  <td class="p-4">Torton International DuraStar (Tanque Químico)</td>
+                  <td class="p-4 font-mono">88-DX-7K</td>
+                  <td class="p-4 font-mono font-bold text-rose-700">SEMARNAT-14-118-PS-I-2019 (REVOCADO)</td>
+                  <td class="p-4"><span class="bg-rose-600 text-white font-black px-2.5 py-1 rounded-full text-[10px]">BLOQUEADO</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- vista 4: expediente anual COA -->
+        <section id="web-view-expediente" class="hidden space-y-6">
+          <div class="flex justify-between items-center">
+            <div>
+              <span class="bg-semarnat-light text-semarnat-dark text-[10px] font-black px-2 py-0.5 rounded">RF-09 - INTEGRACIÓN ANUAL</span>
+              <h2 class="text-xl font-black text-gray-900 mt-1">Expediente Digital Anual COA</h2>
+              <p class="text-xs text-gray-500">Consolidado legal para la entrega ante la Ventanilla Única de la SEMARNAT.</p>
+            </div>
+            <button class="bg-semarnat-dark text-white px-4 py-2 rounded-xl font-bold text-xs shadow">
+               Descargar Expediente Formato PDF/XML
+            </button>
+          </div>
+
+          <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-xs space-y-4">
+            <h3 class="font-bold text-sm text-gray-800">Resumen por Categoría de Residuos Peligrosos 2026</h3>
+            <div class="grid grid-cols-3 gap-4 text-xs font-semibold">
+              <div class="p-4 bg-gray-50 rounded-xl border">
+                <p class="text-gray-400">ACEITE LUBRICANTE USADO</p>
+                <p class="text-lg font-black text-gray-800 mt-1">82.8 Ton</p>
+                <p class="text-[10px] text-green-700">100% Manifiestos Cerrados</p>
+              </div>
+              <div class="p-4 bg-gray-50 rounded-xl border">
+                <p class="text-gray-400">LODOS CON METALES PESADOS</p>
+                <p class="text-lg font-black text-gray-800 mt-1">42.9 Ton</p>
+                <p class="text-[10px] text-green-700">100% Manifiestos Cerrados</p>
+              </div>
+              <div class="p-4 bg-gray-50 rounded-xl border">
+                <p class="text-gray-400">SOLVENTES Y RESIDUOS DE PINTURA</p>
+                <p class="text-lg font-black text-gray-800 mt-1">17.1 Ton</p>
+                <p class="text-[10px] text-amber-700">14 Ton En Tránsito</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- vista 5: usuarios y permisos -->
+        <section id="web-view-usuarios" class="hidden space-y-6">
+          <div class="flex justify-between items-center">
+            <div>
+              <span class="bg-semarnat-light text-semarnat-dark text-[10px] font-black px-2 py-0.5 rounded">RF-11 - CONTROL DE ACCESO</span>
+              <h2 class="text-xl font-black text-gray-900 mt-1">Gestión de Usuarios y Permisos Operativos</h2>
+              <p class="text-xs text-gray-500">Asignación de roles y privilegios para Generadores, Transportistas y Destinos Finales.</p>
+            </div>
+            <button class="bg-semarnat-dark text-white px-4 py-2 rounded-xl font-bold text-xs shadow">
+              + Registrar Nuevo Usuario
+            </button>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-gray-50 border-b border-gray-200 text-gray-400 font-extrabold uppercase text-[10px]">
+                  <th class="p-4">USUARIO / CORREO</th>
+                  <th class="p-4">ROL OPERATIVO</th>
+                  <th class="p-4">EMPRESA / PLANTA ASIGNADA</th>
+                  <th class="p-4">ESTATUS ACCESO</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100 font-medium text-gray-700">
+                <tr class="hover:bg-gray-50">
+                  <td class="p-4 font-bold text-gray-900">Ing. Roberto Vega<span class="block text-[10px] font-normal text-gray-400">r.vega@ecomanifiesto.mx</span></td>
+                  <td class="p-4 font-bold text-semarnat-dark">Administrador</td>
+                  <td class="p-4">Planta Bajío - Celaya #04</td>
+                  <td class="p-4"><span class="bg-emerald-100 text-emerald-800 font-bold px-2.5 py-1 rounded-full text-[10px]">ACTIVO</span></td>
+                </tr>
+                <tr class="hover:bg-gray-50">
+                  <td class="p-4 font-bold text-gray-900">Juan Pérez<span class="block text-[10px] font-normal text-gray-400">j.perez@ecotransportes.com</span></td>
+                  <td class="p-4 font-bold text-amber-700">Transportista (Chófer)</td>
+                  <td class="p-4">EcoTransportes del Centro S.A.</td>
+                  <td class="p-4"><span class="bg-emerald-100 text-emerald-800 font-bold px-2.5 py-1 rounded-full text-[10px]">ACTIVO</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- vista 6: bitacora -->
+        <section id="web-view-bitacora" class="hidden space-y-6">
+          <div class="flex justify-between items-center">
+            <div>
+              <span class="bg-semarnat-light text-semarnat-dark text-[10px] font-black px-2 py-0.5 rounded">RF-08 - TRAZABILIDAD LEGAL</span>
+              <h2 class="text-xl font-black text-gray-900 mt-1">Bitácora Oficial y Auditoría Ambiental</h2>
+              <p class="text-xs text-gray-500">Histórico inalterable con sellado de tiempo criptográfico SHA-256 conforme al Art. 42 de la LGPIR.</p>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-gray-200 p-4 shadow-xs space-y-3">
+            <div class="flex gap-2 text-xs font-mono bg-gray-50 p-3 rounded-xl border">
+              <span class="text-semarnat-dark font-bold">[30/10/2026 14:30:12]</span>
+              <span>Firma de Custodia registrada por operador <strong>Juan Pérez</strong> (EcoTransportes) • Hash: 8f9a2e...c41</span>
+            </div>
+            <div class="flex gap-2 text-xs font-mono bg-gray-50 p-3 rounded-xl border">
+              <span class="text-semarnat-dark font-bold">[30/10/2026 14:15:00]</span>
+              <span>Manifiesto <strong>#EM-2026-0042</strong> generado por <strong>Ing. Roberto Vega</strong> (500L Aceite Usado)</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- vista 7: configuracion -->
+        <section id="web-view-configuracion" class="hidden space-y-6">
+          <div>
+            <span class="bg-semarnat-light text-semarnat-dark text-[10px] font-black px-2 py-0.5 rounded">RF-10 - PARÁMETROS SISTEMA</span>
+            <h2 class="text-xl font-black text-gray-900 mt-1">Configuración General y Registros de Planta</h2>
+            <p class="text-xs text-gray-500">Parámetros de conexión con la Ventanilla Única de SEMARNAT y llaves de cifrado.</p>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-gray-200 p-6 shadow-xs space-y-4 max-w-xl">
+            <div>
+              <label class="block text-xs font-bold text-gray-700 mb-1">Registro Ambiental Federal (RAF)</label>
+              <input type="text" value="RAF-GTO-2024-0891" class="w-full text-xs p-2.5 bg-gray-50 border rounded-xl font-mono">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-gray-700 mb-1">Capacidad Máxima Almacén Temporal (LGPIR)</label>
+              <input type="text" value="1,200 Litros / 60 Días Máximo" class="w-full text-xs p-2.5 bg-gray-50 border rounded-xl">
+            </div>
+            <button class="bg-semarnat-dark text-white font-bold text-xs px-4 py-2.5 rounded-xl">Guardar Cambios</button>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- logica del portal -->
+  <script src="app.js"></script>
+</body>
+</html>

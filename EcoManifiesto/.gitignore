@@ -1,0 +1,12 @@
+*.iml
+.gradle/
+/local.properties
+/.idea/
+.DS_Store
+/build/
+/app/build/
+/captures
+.externalNativeBuild
+.cxx
+# Contiene claves de tu proyecto Firebase; no lo subas a repos públicos
+/app/google-services.json

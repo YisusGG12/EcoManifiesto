@@ -1,0 +1,43 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{db}/documents {
+
+    // revisa si el usuario que hace la peticion tiene rol administrador
+    function esAdmin() {
+      return request.auth != null &&
+        get(/databases/$(db)/documents/users/$(request.auth.uid)).data.get('rol', '') == 'administrador';
+    }
+
+    // cada usuario ve su perfil, el admin ve y edita todos
+    // nadie puede cambiarse el rol una vez asignado
+    match /users/{uid} {
+      allow read: if request.auth != null && (request.auth.uid == uid || esAdmin());
+      allow create: if request.auth != null && request.auth.uid == uid;
+      allow update: if request.auth != null && (
+        esAdmin() ||
+        (request.auth.uid == uid &&
+         request.resource.data.get('rol', '') == resource.data.get('rol', request.resource.data.get('rol', '')))
+      );
+    }
+
+    // catalogos: los lee cualquier usuario con sesion y solo el admin los escribe
+    match /residuos/{id}        { allow read: if request.auth != null; allow write: if esAdmin(); }
+    match /transportistas/{id}  { allow read: if request.auth != null; allow write: if esAdmin(); }
+    match /destinatarios/{id}   { allow read: if request.auth != null; allow write: if esAdmin(); }
+
+    // manifiestos: no se pueden borrar
+    // OJO: por ahora cualquier usuario con sesion puede leer y editar (falta restringir por rol y empresa)
+    match /manifiestos/{folio} {
+      allow read, create, update: if request.auth != null;
+    }
+
+    match /counters/{doc} {
+      allow read, write: if request.auth != null;
+    }
+
+    // tokens para entrar a la pagina web, la app los crea y la web los valida
+    match /handoffs/{token} {
+      allow create: if request.auth != null;
+    }
+  }
+}
